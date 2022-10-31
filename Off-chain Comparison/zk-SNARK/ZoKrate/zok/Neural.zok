@@ -1,0 +1,121 @@
+
+def activate <M> (field[M][M] weights, field[M] input) -> field[M] {
+    field[M] mut activation = [0;M];
+    for u32 i in 0..M {
+        for u32 j in 0..M {
+            activation[i] = activation[i] + weights[i][j]*input[j];
+        }
+    }
+    return activation;
+}
+
+def transfer <N> (field[N] activation) -> field[N]{
+    field[N] mut arr = [0;N];
+    for u32 i in 0..N {
+        arr[i] = 1/(1+activation[i]);  // should be 1/(1+e**activation[i]), but zokrates does not support it
+    }
+    return arr;
+}
+
+// we assume that the number of input and the output is the same i.e. M since it is not easy to initilize different 2d array for 3d array
+def forward_propagate <O, M> (field[O][M][M] network, field[M] row) -> (field[M], field[O][M]){
+    field[M] mut inputs = row;
+    field[O][M] mut neuron_output = [[0;M];O];
+    for u32 i in 0..O {
+        for u32 j in 0..M {
+            field[M] mut activation = activate(network[i], inputs);
+            neuron_output[i] = transfer(activation);
+        }
+        for u32 k in 0..M {
+            inputs[k] = neuron_output[i][k];
+        }
+    }
+    (field[M], field[O][M]) mut v = (inputs, neuron_output);
+    // (field[M], field[M][N]) mut v = ([0;M], [[0;N];M]);
+    return v;
+}
+def transfer_derivative (field output) -> field {
+    return output*(10**18-output);
+}
+
+def backward_propagate_error <O, M> (field[O][M][M] mut network, field[M] expected, field[O][M] neuron_output) -> field[O][M]{
+    field[O][M] mut neuron_delta = [[0;M];O];
+    field[M] mut errors = [0;M];
+    field[M] mut delta = [0;M];
+    for u32 i in 0..O {
+        for u32 j in 0..M {
+            errors[j] = neuron_output[i][j] - expected[j];
+        }
+        for u32 j in 0..M {
+            delta[j] = errors[j]*transfer_derivative(neuron_output[i][j]);
+        }
+        neuron_delta[i] = delta;
+    }
+    return neuron_delta;
+}
+
+def update_weigths <O, M> (field[O][M][M] mut network, field[M] row, field l_rate, field[O][M] neuron_output, field[O][M] neuron_delta) -> field[O][M][M] {
+    for u32 i in 0..O {
+        field[M] mut inputs = row;
+        for u32 j in 0..M {
+            for u32 k in 0..M {
+                network[i][j][k] = network[i][j][k] - l_rate*neuron_delta[i][j]*network[i][j][k];
+            }
+        }
+    }
+    return network;
+}
+
+
+def train_network <O, M, P> (field[O][M][M] mut network, field[P][M] train, field[P] mut label, field l_rate, u32 n_epoch, u32 n_outputs) -> field[O][M][M] {
+    for u32 i in 0..n_epoch {
+        field mut sum_error = 0;
+
+        for u32 j in 0..P {
+            (field[M], field[O][M]) mut v = forward_propagate(network, train[j]);
+            field[M] outputs = v.0;
+            field[O][M] neuron_output = v.1;
+            field[M] expected = [0; n_outputs];
+            // expected[label[j]] = 10**18;
+            for u32 k in 0..M {
+                sum_error = sum_error + (expected[k]-outputs[k])*(expected[k]-outputs[k]);
+            }
+            field[O][M] neuron_delta = backward_propagate_error(network, expected, neuron_output);
+            network = update_weigths(network, train[j], l_rate, neuron_output, neuron_delta);
+        }
+    }
+    return network;    
+}
+
+
+def main() -> field[3][2][2] {
+    //field[3][2][2] mut network = [[[0, 0], [0, 0]], [[0, 0], [0, 0]], [[0, 0], [0, 0]]];
+    field[2] row = [1,2];
+    // field[2] x1 = [0;2];
+    // field[3][2] x2 = [x1;3];
+    // // log("x2 is {}", x2);
+    // (field[3], field[3][2]) mut v = ([0;3], [[0;2];3]);
+    u32 n_input = 10;
+    u32 n_feature = 2;
+    field[n_input][n_feature] mut train = [[1;n_feature];n_input];
+    field[3][n_feature][n_feature] mut network =[[[1;n_feature];n_feature];3];
+
+    
+    // field[4][2] mut train = [[1,2], [1,2], [1,2], [1,2]];
+    field[n_input] mut label = [1;n_input];
+
+    field l_rate = 1;
+    u32 n_epoch = 1;
+    // field n_outputs = M
+    u32 n_outputs = n_feature;
+
+    network = train_network (network, train, label, l_rate, n_epoch, n_outputs);
+    // (field[2], field[3][2]) mut v = forward_propagate(network, row);
+    
+    return network;  
+}
+
+
+
+
+

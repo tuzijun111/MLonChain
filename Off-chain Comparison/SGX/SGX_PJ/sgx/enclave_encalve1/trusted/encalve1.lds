@@ -1,0 +1,9 @@
+encalve1.so
+{
+    global:
+        g_global_data_sim;
+        g_global_data;
+        encalve1_entry;
+    local:
+        *;
+};

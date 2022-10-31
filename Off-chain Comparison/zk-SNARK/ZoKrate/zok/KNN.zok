@@ -1,0 +1,44 @@
+
+def euclidean_distance<N>(field[N] row1, field[N] row2) -> field {
+    field mut distance = 0;
+    for u32 i in 0..N {
+        distance = distance + (row1[i]-row2[i])**2;
+    }
+    return distance;
+}
+
+//By default we assume num_neighbors = M, meaning that we can return the array without sorting them 
+
+/*
+def get_neighbors<M><N>(field[M][N] train, field[N] test, field num_neighbors) -> field[M] {
+    field[M] mut distances = [0; M];
+    for u32 i in 0..M {
+        distances[i]  = euclidean_distance(test, train[i]);
+    }
+    return distances;
+}
+*/
+
+
+
+
+def main() -> field {
+
+    u32 n_input = 100;
+    u32 n_feature = 10;
+    field[n_input][n_feature] mut train = [[1;n_feature];n_input];
+    //field[2][2] train = [[1, 2], [3, 4]];
+    field[n_feature] test = [1;n_feature];
+    field num_neighbors = 10;
+
+    
+    field[n_input] mut distances = [0; n_input];
+    for u32 i in 0..n_input {
+        distances[i]  = euclidean_distance(test, train[i]);
+    }
+    
+
+    return distances[0];
+     
+}
+

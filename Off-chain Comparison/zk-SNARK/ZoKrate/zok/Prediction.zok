@@ -1,0 +1,96 @@
+
+
+
+def predict<N>(field[N] row, field[N] coefficients) -> field {
+    field mut yhat = coefficients[N-1];   //assume that the constant coefficient is 0 i.e. the last element of coefficients
+    for u32 j in 0..N-1 {
+        yhat = yhat + coefficients[j] * row[j];
+    }
+    return yhat;
+}
+
+
+
+def activate <M> (field[M][M] weights, field[M] input) -> field[M] {
+    field[M] mut activation = [0;M];
+    for u32 i in 0..M {
+        for u32 j in 0..M {
+            activation[i] = activation[i] + weights[i][j]*input[j];
+        }
+    }
+    return activation;
+}
+
+def transfer <N> (field[N] activation) -> field[N]{
+    field[N] mut arr = [0;N];
+    for u32 i in 0..N {
+        arr[i] = 1/(1+activation[i]);  // should be 1/(1+e**activation[i]), but zokrates does not support it
+    }
+    return arr;
+}
+
+def NN_predict <O, M> (field[O][M][M] network, field[M] row) -> field[M] {
+    field[M] mut inputs = row;
+    field[O][M] mut neuron_output = [[0;M];O];
+    for u32 i in 0..O {
+        for u32 j in 0..M {
+            field[M] mut activation = activate(network[i], inputs);
+            neuron_output[i] = transfer(activation);
+        }
+        for u32 k in 0..M {
+            inputs[k] = neuron_output[i][k];
+        }
+    }
+    // (field[M], field[M][N]) mut v = ([0;M], [[0;N];M]);
+    return inputs;
+}
+
+
+
+
+
+
+
+def main() -> field[10] {
+//  // Logistic Regression prediction  
+//     u32 n_feature = 2;
+//     u32 n_input = 2;
+//     field[n_input] coefficients = [1;n_input];
+//     field[n_input][n_feature] test = [[1;n_feature];n_input];
+//     field[n_input] mut res = [1;n_input];
+//     for u32 i in 0..n_input {
+//         res[i] = predict(test[i], coefficients);
+//     }
+//     return res;
+
+// Neural Network prediction
+
+    // u32 n_feature = 10;  // note that the number of nodes for each layer is the same including the input and output layer
+    //                     // this is for easy representation of network in zokrate
+    // u32 num_layer = 3;
+    u32 n_input = 10;
+    // field[n_input][n_feature] mut res = [[1;n_feature];n_input];
+    // field[n_input] mut prediction = [1;n_input];
+    // field[num_layer][n_feature][n_feature] mut network = [[[1;n_feature];n_feature];num_layer];
+    // field[n_input][n_feature] test = [[1;n_feature];n_input];
+    // for u32 i in 0..n_input {
+    //     res[i] = NN_predict(network, test[i]);
+    //     prediction[i] = res[i][0];
+    // }
+    
+    field[n_input] mut res = [1;n_input];
+    return res;
+    
+   
+}
+
+
+
+
+/*
+
+zokrates compile -i test.zok
+zokrates setup
+zokrates compute-witness -a argument1 argument2 ... 
+
+*/

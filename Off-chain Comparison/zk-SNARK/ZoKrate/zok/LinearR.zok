@@ -1,0 +1,89 @@
+/*   // example
+def main(private field a, field b) {
+    assert(a * a == b);
+    return;
+}
+*/
+
+/*
+def main(u32 sum) {
+    u32 mut res = 0;
+    for u32 i in 0..5 {      
+        res = res + i;        
+    }
+    assert(res == sum);
+    return;
+}
+*/
+
+
+
+def predict<N>(field[N] row, field[N] coefficients) -> field {
+    field mut yhat = coefficients[N-1];   //assume that the constant coefficient is 0 i.e. the last element of coefficients
+    for u32 j in 0..N-1 {
+        yhat = yhat + coefficients[j] * row[j];
+    }
+    // since non-constant exponent and float type are not supported for zokrates, we just use interger type for experiments, 
+    // res = 1/(1+ (1/2**yhat) );  it requires that yhat should not be non-constant exponent
+    // can be found in the operators section of zokrates webpage https://zokrates.github.io/language/operators.html
+
+    return yhat;
+    // return 1/(1+ (1/2**yhat) )   // set e = 2 here for simplification
+}
+
+
+def coefficients_sgd<M, N>(field[M][N] train, field l_rate, u32 n_epoch) -> field[N] {
+    field[N] mut coef = [0; N];
+    for u32 i in 0..n_epoch {
+        for u32 j in 0..M {
+            field mut yhat = predict(train[j], coef);
+            field error = train[j][N-1] - yhat;
+            for u32 m in 0..N-1 {
+                coef[m] = coef[m] + (l_rate*error) * yhat * train[j][m];  // use yhat instead of (1-yhat) because the field type (i.e. positive nums)
+            }
+        }
+    }  
+    return coef;  
+}
+
+//note that the last element of train is its label, also note that for simpilicity we set the label of test data as 0 by default 
+// and to make sure that the length of test and train is the same
+def logistic_regression<M, N, P>(field[M][N] train, field[P][N] test, field l_rate, u32 n_epoch) -> field[P] {
+    field[P] mut prediction = [0; P];
+    field[N] coef = coefficients_sgd(train, l_rate, n_epoch);
+    for u32 i in 0..P {
+        field mut yhat = predict(test[i], coef);
+        //  i.e. >=0.5, round to 1, we use 5 since float type is not supported
+        prediction[i] =  if yhat >= 5 {1} else {0};
+    }
+    return prediction;    
+}
+
+
+def main() -> field[10] {
+    
+    u32 n_feature = 10;
+    u32 training_input = 100;
+    u32 n_input = 1;
+    field[training_input][n_feature] mut train = [[1;n_feature];training_input];
+    field[n_input][n_feature] mut test = [[2;n_feature];n_input];
+    field l_rate = 1;
+    u32 n_epoch = 10;
+    field[n_feature] res = coefficients_sgd(train, l_rate, n_epoch);
+    //field[n_input] res = logistic_regression(train, test, l_rate, n_epoch);
+
+    // assert(myres == res);
+    return res;   
+
+}
+
+
+
+
+/*
+
+zokrates compile -i test.zok
+zokrates setup
+zokrates compute-witness -a argument1 argument2 ... 
+
+*/
