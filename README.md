@@ -7,3 +7,5 @@
 3. The SC interaction folder includes the programs for calling the corresponding smart contracts (which implemente the ML models in solidity). Also, it contains the program for getting access to the verifier smart contract for the zk-SNARKs-based (in ZoKrates) method. The SGX-based method is implemented with Eclipse on the Ubuntu 20.04.
 
 4. The Smart Contracts folder contain all the smart contracts which implement ML models, inference and updating. The ZoKrates will generate a specific verifier function for each new setting of ML models, therefore, we do not include the verifier smart contracts here.
+
+5. The Dataset folder contains two real datasets: Amazon Access Samples and 3D Road Network.
